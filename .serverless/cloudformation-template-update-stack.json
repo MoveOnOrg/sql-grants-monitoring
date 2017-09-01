@@ -1,0 +1,175 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "The AWS CloudFormation template for this Serverless application",
+  "Resources": {
+    "ServerlessDeploymentBucket": {
+      "Type": "AWS::S3::Bucket"
+    },
+    "SqlUnderscoregrantsUnderscoremonitoringLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": "/aws/lambda/sql-grants-monitoring-prod-sql_grants_monitoring"
+      }
+    },
+    "IamRoleLambdaExecution": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": [
+                  "lambda.amazonaws.com"
+                ]
+              },
+              "Action": [
+                "sts:AssumeRole"
+              ]
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": {
+              "Fn::Join": [
+                "-",
+                [
+                  "prod",
+                  "sql-grants-monitoring",
+                  "lambda"
+                ]
+              ]
+            },
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sql-grants-monitoring-prod-sql_grants_monitoring:*"
+                    }
+                  ]
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": [
+                    {
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/sql-grants-monitoring-prod-sql_grants_monitoring:*:*"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ],
+        "Path": "/",
+        "RoleName": {
+          "Fn::Join": [
+            "-",
+            [
+              "sql-grants-monitoring",
+              "prod",
+              "us-west-1",
+              "lambdaRole"
+            ]
+          ]
+        }
+      }
+    },
+    "SqlUnderscoregrantsUnderscoremonitoringLambdaFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Ref": "ServerlessDeploymentBucket"
+          },
+          "S3Key": "serverless/sql-grants-monitoring/prod/1504296819295-2017-09-01T20:13:39.295Z/sql-grants-monitoring.zip"
+        },
+        "FunctionName": "sql-grants-monitoring-prod-sql_grants_monitoring",
+        "Handler": "sql_grants_monitoring.aws_lambda",
+        "MemorySize": 1024,
+        "Role": {
+          "Fn::GetAtt": [
+            "IamRoleLambdaExecution",
+            "Arn"
+          ]
+        },
+        "Runtime": "python3.6",
+        "Timeout": 6
+      },
+      "DependsOn": [
+        "SqlUnderscoregrantsUnderscoremonitoringLogGroup",
+        "IamRoleLambdaExecution"
+      ]
+    },
+    "SqlUnderscoregrantsUnderscoremonitoringLambdaVersionAvMemfUJz2FZCourQKVuaAQYzkcxd9NFt54PLKCqFs": {
+      "Type": "AWS::Lambda::Version",
+      "DeletionPolicy": "Retain",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "SqlUnderscoregrantsUnderscoremonitoringLambdaFunction"
+        },
+        "CodeSha256": "AvMemfUJz2FZCourQKVu+aAQYzkcxd9NFt54PLKCqFs="
+      }
+    },
+    "SqlUnderscoregrantsUnderscoremonitoringEventsRuleSchedule1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "ScheduleExpression": "cron(0 3 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "SqlUnderscoregrantsUnderscoremonitoringLambdaFunction",
+                "Arn"
+              ]
+            },
+            "Id": "sql_grants_monitoringSchedule"
+          }
+        ]
+      }
+    },
+    "SqlUnderscoregrantsUnderscoremonitoringLambdaPermissionEventsRuleSchedule1": {
+      "Type": "AWS::Lambda::Permission",
+      "Properties": {
+        "FunctionName": {
+          "Fn::GetAtt": [
+            "SqlUnderscoregrantsUnderscoremonitoringLambdaFunction",
+            "Arn"
+          ]
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "SqlUnderscoregrantsUnderscoremonitoringEventsRuleSchedule1",
+            "Arn"
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "ServerlessDeploymentBucketName": {
+      "Value": {
+        "Ref": "ServerlessDeploymentBucket"
+      }
+    },
+    "SqlUnderscoregrantsUnderscoremonitoringLambdaFunctionQualifiedArn": {
+      "Description": "Current Lambda function version",
+      "Value": {
+        "Ref": "SqlUnderscoregrantsUnderscoremonitoringLambdaVersionAvMemfUJz2FZCourQKVuaAQYzkcxd9NFt54PLKCqFs"
+      }
+    }
+  }
+}
