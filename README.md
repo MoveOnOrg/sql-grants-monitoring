@@ -17,8 +17,9 @@ SQL Grants Monitoring is a Python 3 script that checks if a given user can acces
 
 1) Set AWS credentials in ~/.aws/credentials
 2) From within Node 4+ environment ....
-3) $ `npm install -g serverless`
-4) $ `serverless deploy`
+3) $ `npm install -g serverless@1.20.2` (**NOTE**: this is a specific version because newer versions currently package psychopg2 in a corrupt state)
+4) $ `npm install`
+5) $ `serverless deploy`
 
 # More Options
 

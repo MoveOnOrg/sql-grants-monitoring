@@ -1,9 +1,13 @@
 import os
+import sys
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(BASE_DIR, "vendored"))
+
 import psycopg2
 import psycopg2.extras
 import slackweb
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if os.path.exists(os.path.join(BASE_DIR, 'settings.py')):
     import settings
 else:

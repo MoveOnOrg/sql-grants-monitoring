@@ -18,6 +18,7 @@ package:
     - serverless.yml
     - README.md
     - LICENSE.txt
+    - venv/**
 
 functions:
   sql_grants_monitoring:
