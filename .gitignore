@@ -4,3 +4,4 @@ venv
 settings.py
 vendored/
 .serverless/
+zappa_settings.json
