@@ -1,12 +1,12 @@
+import slackweb
+import psycopg2.extras
+import psycopg2
 import os
 import sys
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.join(BASE_DIR, "vendored"))
 
-import psycopg2
-import psycopg2.extras
-import slackweb
 
 if os.path.exists(os.path.join(BASE_DIR, 'settings.py')):
     import settings
@@ -17,6 +17,7 @@ else:
 class Struct:
     def __init__(self, **entries):
         self.__dict__.update(entries)
+
 
 ARG_DEFINITIONS = {
     'DB_HOST': 'Database host IP or hostname',
@@ -39,6 +40,7 @@ DEFAULT_ARG_VALUES = {
     'SLACK_USERNAME': 'SQL Grant Monitor',
     'SLACK_ICON': ':no_entry:'
     }
+
 
 def main(args):
 
@@ -71,10 +73,12 @@ def main(args):
             query = 'SELECT * FROM %s LIMIT 1' % table
             try:
                 redshift_cursor.execute(query)
+                print('Successfully accessed table: '+query)
                 open_tables.append(table)
             except psycopg2.Error as e:
                 redshift.rollback()
                 if e.pgcode == '42501':
+                    print('Permissions error for table: '+query)
                     pass
                 else:
                     other_error_tables.append(table)
@@ -85,7 +89,8 @@ def main(args):
 
         if len(open_tables):
             if len(other_error_tables):
-                notification_text = 'The following tables have SELECT grants and should not: %s. Also, these tables raised non-access errors on SELECT: %s' % (','.join(open_tables), ','.join(other_error_tables))
+                notification_text = 'The following tables have SELECT grants and should not: %s. Also, these tables raised non-access errors on SELECT: %s' % (
+                    ','.join(open_tables), ','.join(other_error_tables))
             else:
                 notification_text = 'The following tables have SELECT grants and should not: %s' % ','.join(open_tables)
         elif len(other_error_tables):
@@ -93,6 +98,9 @@ def main(args):
 
         if notification_text:
             slack.notify(text=notification_text, channel=args.SLACK_CHANNEL, username=args.SLACK_USERNAME, icon_emoji=args.SLACK_ICON)
+        else:
+            print('Success - no notification sent.')
+
 
 if __name__ == '__main__':
     import argparse
@@ -105,8 +113,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     main(args)
 
-def aws_lambda(event, context):
 
+def aws_lambda(event, context):
     for argname, helptext in ARG_DEFINITIONS.items():
         if not event.get(argname, False):
             event[argname] = getattr(settings, argname, False)
